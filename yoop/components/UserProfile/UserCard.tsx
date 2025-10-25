@@ -331,7 +331,6 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
             className="card-base cursor-pointer p-4 min-h-[15vh] space-y-4"
             onClick={handleEditClick}
           >
-            <h3 className="text-lg font-semibold text-accent">Навыки и интересы</h3>
             {renderListPreview()}
           </div>
           <ModalPopup
