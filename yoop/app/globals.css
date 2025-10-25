@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+
+
 /* БАЗОВАЯ ТЕМА (темная) */
 @layer base {
   :root {
@@ -99,3 +101,14 @@
     color: var(--logo);
   }
 }
+
+@layer components {
+  .card-base {
+    @apply p-4 rounded-xl shadow-md border border-gray-300 bg-[#151515] text-gray-100 transition-all duration-300 h-64;
+  }
+
+  .card-base:hover {
+    @apply shadow-lg border-gray-400;
+  }
+}
+
