@@ -1,27 +1,82 @@
-import { FC, useState } from "react";
-import ModalPopup from "../EditProfilePopup"
+import { FC, useMemo, useState } from "react";
+import ModalPopup from "../EditProfilePopup";
 import { ApiUser } from "@/lib/api";
 
 type UserCardProps = {
   user: ApiUser;
   variant: "info" | "description" | "skills" | "photo";
-  onUpdate?: (newText: string) => void;
+  onUpdate?: (changes: Partial<ApiUser>) => void;
 };
 
 const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editText, setEditText] = useState(user.bio);
+  const [editText, setEditText] = useState("");
 
-  const fullName = `${user.name} (${user.age} лет)`;
+  const initialText = useMemo(() => {
+    switch (variant) {
+      case "info":
+        {
+          const fio = [user.surName, user.name, user.fatherName]
+            .filter(Boolean)
+            .join(" ");
+          const ageText = user.age ? `, ${user.age}` : "";
+          return `${fio}${ageText}`.trim();
+        }
+      case "description":
+        return user.describeUser ?? "";
+      case "skills":
+        return (user.skills ?? []).join(", ");
+      default:
+        return "";
+    }
+  }, [variant, user]);
+
+  const fullName = useMemo(() => {
+    const fio = [user.surName, user.name, user.fatherName]
+      .filter(Boolean)
+      .join(" ");
+    return fio || user.name || user.login || "Без имени";
+  }, [user]);
 
   const handleEditClick = () => {
     if (variant === "photo") return;
-    setEditText(user.bio);
+    setEditText(initialText);
     setIsModalOpen(true);
   };
 
   const handleEditSubmit = (newText: string) => {
-    if (onUpdate) onUpdate(newText);
+    if (!onUpdate) {
+      setIsModalOpen(false);
+      return;
+    }
+
+    if (variant === "info") {
+      const [fioPart, agePart] = newText.split(",");
+      const fioPieces = fioPart ? fioPart.trim().split(/\s+/).filter(Boolean) : [];
+      const next: Partial<ApiUser> = {};
+      if (fioPieces.length >= 2) {
+        const [surName, name, ...rest] = fioPieces;
+        const fatherName = rest.join(" ");
+        next.surName = surName;
+        next.name = name;
+        if (fatherName) next.fatherName = fatherName;
+      }
+      const parsedAge = agePart ? Number.parseInt(agePart.trim(), 10) : NaN;
+      if (!Number.isNaN(parsedAge)) {
+        next.age = parsedAge;
+      }
+      if (Object.keys(next).length > 0) {
+        onUpdate(next);
+      }
+    } else if (variant === "description") {
+      onUpdate({ describeUser: newText.trim() });
+    } else if (variant === "skills") {
+      const skills = newText
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      onUpdate({ skills });
+    }
     setIsModalOpen(false);
   };
 
@@ -30,15 +85,19 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
       return (
         <>
           <div className="card-base cursor-pointer p-4" onClick={handleEditClick}>
-            <h2 className="text-lg font-semibold text-accent">{fullName}</h2>
+            <h2 className="text-lg font-semibold text-accent">
+              {fullName}
+              {user.age ? ` (${user.age} лет)` : ""}
+            </h2>
           </div>
           <ModalPopup
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
             onSubmit={handleEditSubmit}
             title="Редактировать ФИО и возраст"
-            placeholder="Введите новое ФИО или возраст"
-            initialText={editText}
+            placeholder="Фамилия Имя Отчество, возраст"
+            value={editText}
+            onChange={setEditText}
           />
         </>
       );
@@ -47,7 +106,9 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
         <>
           <div className="card-base cursor-pointer p-4 min-h-[20vh]" onClick={handleEditClick}>
             <h3 className="text-lg font-semibold mb-2 text-accent">О себе</h3>
-            <p className="text-gray-300">{user.bio || "Нет описания"}</p>
+            <p className="text-gray-300">
+              {(user.describeUser && user.describeUser.trim()) || "Нет описания"}
+            </p>
           </div>
           <ModalPopup
             isOpen={isModalOpen}
@@ -55,7 +116,8 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
             onSubmit={handleEditSubmit}
             title="Редактировать биографию"
             placeholder="Введите новое описание"
-            initialText={editText}
+            value={editText}
+            onChange={setEditText}
           />
         </>
       );
@@ -64,7 +126,11 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
         <>
           <div className="card-base cursor-pointer p-4 min-h-[15vh]" onClick={handleEditClick}>
             <h3 className="text-lg font-semibold mb-2 text-accent">Навыки</h3>
-            <p className="text-gray-300">{user.bio || "Нет навыков"}</p>
+            <p className="text-gray-300">
+              {(user.skills && user.skills.length > 0
+                ? user.skills.join(", ")
+                : "Нет навыков")}
+            </p>
           </div>
           <ModalPopup
             isOpen={isModalOpen}
@@ -72,7 +138,8 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
             onSubmit={handleEditSubmit}
             title="Редактировать навыки"
             placeholder="Введите навыки через запятую"
-            initialText={editText}
+            value={editText}
+            onChange={setEditText}
           />
         </>
       );
@@ -82,7 +149,7 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
           <div className="w-32 h-32 rounded-full bg-gray-700 flex items-center justify-center">
             <span className="text-gray-300">Фото</span>
           </div>
-          <h3 className="mt-3 text-lg font-medium text-accent">{user.name}</h3>
+          <h3 className="mt-3 text-lg font-medium text-accent">{fullName}</h3>
         </div>
       );
     default:

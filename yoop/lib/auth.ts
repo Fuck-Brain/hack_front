@@ -21,7 +21,12 @@ export type SignupInput = {
   photoHash?: string;
 };
 
-export async function loginApi(data: LoginInput): Promise<string> {
+export type AuthResponse = {
+  userId: string;
+  token: string;
+};
+
+export async function loginApi(data: LoginInput): Promise<AuthResponse> {
   ensureBase();
   const res = await fetch(`${API_BASE}/user/login`, {
     method: "POST",
@@ -34,10 +39,18 @@ export async function loginApi(data: LoginInput): Promise<string> {
     if (res.status === 400) throw new Error("Неверный логин или пароль");
     throw new Error(`${res.status} ${text || "Ошибка авторизации"}`);
   }
-  return text.replace(/^"|"$/g, ""); // JWT
+  try {
+    const payload = JSON.parse(text) as AuthResponse;
+    if (!payload.userId || !payload.token) {
+      throw new Error("Некорректный ответ сервера");
+    }
+    return payload;
+  } catch {
+    throw new Error("Не удалось прочитать ответ сервера");
+  }
 }
 
-export async function signupApi(data: SignupInput): Promise<string> {
+export async function signupApi(data: SignupInput): Promise<AuthResponse> {
   ensureBase();
 
   if (data.password !== data.password2) {
@@ -67,7 +80,15 @@ export async function signupApi(data: SignupInput): Promise<string> {
   });
   const text = await res.text().catch(() => "");
   if (res.status === 201) {
-    return text.replace(/^"|"$/g, ""); // JWT
+    try {
+      const payload = JSON.parse(text) as AuthResponse;
+      if (!payload.userId || !payload.token) {
+        throw new Error("Некорректный ответ сервера");
+      }
+      return payload;
+    } catch {
+      throw new Error("Не удалось прочитать ответ сервера");
+    }
   }
   if (res.status === 400) {
     throw new Error("Пользователь с таким логином уже существует");

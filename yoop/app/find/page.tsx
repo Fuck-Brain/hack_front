@@ -8,7 +8,7 @@ import SearchCarousel from "@/components/SearchCarousel";
 
 export default function FindPage() {
   const router = useRouter();
-  const { isAuthed, openLogin } = useAuthStore();
+  const { isAuthed } = useAuthStore();
 
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
