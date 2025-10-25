@@ -1,71 +1,83 @@
-// components/LoginModal.tsx
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
-import { login } from "@/lib/auth"; // твой текущий mock-логин
+import { loginApi, type LoginInput } from "@/lib/auth";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 export default function LoginModal() {
   const { loginOpen, closeLogin, setAuthed } = useAuthStore();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const router = useRouter();
   const params = useSearchParams();
+  const [serverError, setServerError] = useState<string | null>(null);
 
   useEffect(() => {
     const a = params.get("auth");
     if (a === "login") useAuthStore.getState().openLogin();
   }, [params]);
 
-  const onLogin = async () => {
-    const user = await login({ email, password });
-    setAuthed(true, user);
-    closeLogin();
-    setEmail("");
-    setPassword("");
-    router.replace("/");
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginInput>();
+
+  const onSubmit = async (values: LoginInput) => {
+    setServerError(null);
+    try {
+      const token = await loginApi(values);
+      localStorage.setItem("token", token);
+      setAuthed(true, { id: "me", login: values.login, name: values.login });
+      reset();
+      closeLogin();
+      router.replace("/");
+    } catch (e: any) {
+      setServerError(e.message || "Ошибка авторизации");
+    }
   };
 
   return (
     <Dialog open={loginOpen} onOpenChange={(o) => !o && closeLogin()}>
-      <DialogContent>
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Log in</DialogTitle>
+          <DialogTitle>Вход в аккаунт</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <Label htmlFor="login-email">Email</Label>
-            <Input
-              id="login-email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-            />
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <div>
+            <Label>Логин</Label>
+            <Input {...register("login", { required: "Введите логин" })} />
+            {errors.login && <p className="text-sm text-red-400">{errors.login.message}</p>}
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="login-pass">Пароль</Label>
-            <Input
-              id="login-pass"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-            />
+
+          <div>
+            <Label>Пароль</Label>
+            <Input type="password" {...register("password", { required: "Введите пароль" })} />
+            {errors.password && <p className="text-sm text-red-400">{errors.password.message}</p>}
           </div>
-          <Button onClick={onLogin} className="w-full">
-            Войти
-          </Button>
-        </div>
+
+          {serverError && <p className="text-red-400 text-sm">{serverError}</p>}
+
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="outline" onClick={closeLogin}>
+              Отмена
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Вход..." : "Войти"}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

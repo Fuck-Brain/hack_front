@@ -1,21 +1,26 @@
+// store/useAuthStore.ts
 import { create } from "zustand";
 
-type User = { id: string; name: string; email: string } | null;
+type User = {
+  id: string;
+  login: string;
+  name?: string;
+};
 
-interface AuthState {
+type State = {
   isAuthed: boolean;
-  user: User;
+  user: User | null;
   loginOpen: boolean;
   signupOpen: boolean;
   openLogin: () => void;
   closeLogin: () => void;
   openSignup: () => void;
   closeSignup: () => void;
-  setAuthed: (authed: boolean, user?: User) => void;
-  logout: () => void;
-}
 
-export const useAuthStore = create<AuthState>((set) => ({
+  setAuthed: (a: boolean, user?: User | null) => void;
+};
+
+export const useAuthStore = create<State>((set) => ({
   isAuthed: false,
   user: null,
   loginOpen: false,
@@ -24,6 +29,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   closeLogin: () => set({ loginOpen: false }),
   openSignup: () => set({ signupOpen: true }),
   closeSignup: () => set({ signupOpen: false }),
-  setAuthed: (authed, user) => set({ isAuthed: authed, user: user ?? null }),
-  logout: () => set({ isAuthed: false, user: null }),
+
+  setAuthed: (a, user) => set({ isAuthed: a, user: user ?? null }),
 }));
