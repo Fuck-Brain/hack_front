@@ -16,10 +16,11 @@ export default function FindPage() {
 
   useEffect(() => {
     if (!isAuthed) {
-      openLogin();
-      router.push("/?auth=login");
+      router.replace("/"); // сразу на главную
     }
-  }, [isAuthed, openLogin, router]);
+  }, [isAuthed, router]);
+
+  if (!isAuthed) return null;
 
   const onSearch = async (e?: React.FormEvent) => {
     e?.preventDefault();

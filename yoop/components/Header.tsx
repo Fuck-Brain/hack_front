@@ -1,5 +1,4 @@
 "use client";
-
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -24,10 +23,21 @@ export default function Header() {
     // 1) чистим auth из стора (и токен, если это делает стор)
     logout();
     // 2) на всякий случай чистим токен здесь (если не делается в сторе)
-    try { localStorage.removeItem("token"); } catch {}
+    try {
+      localStorage.removeItem("token");
+    } catch {}
     // 3) уводим на главную и обновляем состояние
     router.replace("/");
     router.refresh();
+  };
+
+  const handleFindClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!isAuthed) {
+      openLogin(); // показать попап логина
+      return; // не навигируемся
+    }
+    router.push("/find"); // авторизован — идём на страницу
   };
 
   return (
@@ -43,7 +53,9 @@ export default function Header() {
             className="select-none"
             priority
           />
-          <span className={`${museo.className} text-logo text-xl font-semibold tracking-wide`}>
+          <span
+            className={`${museo.className} text-logo text-xl font-semibold tracking-wide`}
+          >
             YooPeople
           </span>
         </Link>
@@ -59,11 +71,11 @@ export default function Header() {
           </Button>
 
           <Button
-            asChild
             variant="ghost"
+            onClick={handleFindClick}
             className="cursor-pointer text-accent text-[16px] font-medium border-none bg-transparent hover:bg-transparent hover:bg-[color:var(--secondary)]"
           >
-            <Link href="/find">Найти людей</Link>
+            Найти людей
           </Button>
         </nav>
 
@@ -94,7 +106,9 @@ export default function Header() {
                 >
                   <Avatar className="h-6 w-6">
                     <AvatarFallback>
-                      {(user?.name ?? user?.login ?? "U").slice(0, 1).toUpperCase()}
+                      {(user?.name ?? user?.login ?? "U")
+                        .slice(0, 1)
+                        .toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <span className="max-w-[140px] truncate">
@@ -104,7 +118,9 @@ export default function Header() {
               </DropdownMenuTrigger>
 
               <DropdownMenuContent align="end" className="min-w-48">
-                <DropdownMenuLabel className="cursor-default">Мой аккаунт</DropdownMenuLabel>
+                <DropdownMenuLabel className="cursor-default">
+                  Мой аккаунт
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   asChild
