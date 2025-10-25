@@ -14,14 +14,30 @@ export type RegisterPayload = {
   contact?: string | null;
 };
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE || "";
+const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_BASE || "";
+const BASE_URL = RAW_BASE_URL.endsWith("/")
+  ? RAW_BASE_URL.slice(0, -1)
+  : RAW_BASE_URL;
 
 // общий helper
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const targetPath = path.startsWith("/") ? path : `/${path}`;
+  const headers = new Headers(init.headers ?? {});
+
+  if (init.body !== undefined && !(init.body instanceof FormData)) {
+    if (!headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
+    }
+  }
+
+  if (!headers.has("Accept")) {
+    headers.set("Accept", "application/json");
+  }
+
+  const res = await fetch(`${BASE_URL}${targetPath}`, {
     cache: "no-store",
-    headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
     ...init,
+    headers,
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");

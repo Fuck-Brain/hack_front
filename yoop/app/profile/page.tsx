@@ -69,28 +69,80 @@ export default function ProfilePage() {
   }, [authUser?.id, authToken]);
 
   const handleCardUpdate = (changes: Partial<ApiUser>) => {
+    let hasAppliedChanges = false;
     setUser((prev) => {
       if (!prev) return prev;
-      const updated: ApiUser = {
-        ...prev,
-        ...changes,
-        describeUser:
-          changes.describeUser !== undefined
-            ? changes.describeUser.trim()
-            : prev.describeUser,
-        bio:
-          changes.describeUser !== undefined
-            ? changes.describeUser.trim()
-            : prev.bio,
-        skills: changes.skills ?? prev.skills,
-        interests: changes.interests ?? prev.interests,
-        hobbies: changes.hobbies ?? prev.hobbies,
-      };
-      return updated;
+
+      const next: ApiUser = { ...prev };
+      let changed = false;
+
+      if (changes.name !== undefined) {
+        const value = changes.name.trim();
+        if (value !== prev.name) changed = true;
+        next.name = value;
+      }
+
+      if (changes.surName !== undefined) {
+        const value = changes.surName.trim();
+        if (value !== prev.surName) changed = true;
+        next.surName = value;
+      }
+
+      if (changes.fatherName !== undefined) {
+        const value = changes.fatherName.trim();
+        if (value !== (prev.fatherName ?? "")) changed = true;
+        next.fatherName = value;
+      }
+
+      if (changes.age !== undefined) {
+        if (changes.age !== prev.age) changed = true;
+        next.age = changes.age;
+      }
+
+      if (changes.describeUser !== undefined) {
+        const value = changes.describeUser.trim();
+        if (value !== (prev.describeUser ?? "")) changed = true;
+        next.describeUser = value;
+        next.bio = value;
+      }
+
+      if (changes.skills !== undefined) {
+        const value = [...changes.skills];
+        if (JSON.stringify(value) !== JSON.stringify(prev.skills ?? [])) {
+          changed = true;
+        }
+        next.skills = value;
+      }
+
+      if (changes.interests !== undefined) {
+        const value = [...changes.interests];
+        if (JSON.stringify(value) !== JSON.stringify(prev.interests ?? [])) {
+          changed = true;
+        }
+        next.interests = value;
+      }
+
+      if (changes.hobbies !== undefined) {
+        const value = [...changes.hobbies];
+        if (JSON.stringify(value) !== JSON.stringify(prev.hobbies ?? [])) {
+          changed = true;
+        }
+        next.hobbies = value;
+      }
+
+      if (!changed) {
+        return prev;
+      }
+
+      hasAppliedChanges = true;
+      return next;
     });
-    setDirty(true);
-    setError(null);
-    setSuccess(null);
+
+    if (hasAppliedChanges) {
+      setDirty(true);
+      setError(null);
+      setSuccess(null);
+    }
   };
 
   const resolvedToken = useMemo(() => {
