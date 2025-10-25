@@ -52,6 +52,7 @@ export const useAuthStore = create<State>()(
       loginSuccess: (user, token) => {
         try {
           localStorage.setItem("token", token);
+          localStorage.setItem("userId", user.id);
         } catch {}
         set({ isAuthed: true, user, token });
       },
@@ -69,6 +70,7 @@ export const useAuthStore = create<State>()(
       logout: () => {
         try {
           localStorage.removeItem("token");
+          localStorage.removeItem("userId");
         } catch {}
         set({ isAuthed: false, user: null, token: null });
       },

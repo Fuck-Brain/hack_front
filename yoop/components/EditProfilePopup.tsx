@@ -1,34 +1,32 @@
 // components/ModalPopup.tsx
 "use client";
 
-import { useState } from "react";
+import { type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface ModalPopupProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (text: string) => void;
+  onSubmit: () => void;
   title?: string;
-  placeholder?: string;
-  initialText?: string;
+  submitLabel?: string;
+  isSubmitDisabled?: boolean;
+  children: ReactNode;
 }
 
 export default function ModalPopup({
   isOpen,
   onClose,
   onSubmit,
-  title = "Редактирование карточки",
-  placeholder = "Введите новый текст...",
-  initialText = "",
+  title = "Редактирование",
+  submitLabel = "Сохранить",
+  isSubmitDisabled,
+  children,
 }: ModalPopupProps) {
-  const [inputText, setInputText] = useState(initialText);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputText.trim()) {
-      onSubmit(inputText);
-      setInputText("");
-      onClose();
+    if (!isSubmitDisabled) {
+      onSubmit();
     }
   };
 
@@ -49,34 +47,39 @@ export default function ModalPopup({
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="card-base w-full max-w-lg relative border border-gray-300 bg-[#151515] text-gray-100 shadow-xl"
+            className="card-base w-full max-w-2xl relative border border-gray-300 bg-[#151515] text-gray-100 shadow-xl"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="p-6 flex flex-col h-full">
+            <div className="p-6 flex flex-col max-h-[90vh]">
               <h2 className="text-xl font-semibold text-accent mb-4">
                 {title}
               </h2>
 
-              <form onSubmit={handleSubmit} className="flex flex-col flex-1">
-                <textarea
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  placeholder={placeholder}
-                  className="w-full flex-1 p-3 rounded-md bg-[#1c1c1c] text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-accent resize-none text-sm"
-                  rows={8}
-                  autoFocus
-                />
+              <form
+                onSubmit={handleSubmit}
+                className="flex flex-col gap-4 overflow-hidden"
+              >
+                <div className="flex-1 overflow-y-auto pr-1">
+                  {children}
+                </div>
 
-                <div className="flex justify-end mt-4">
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-4 py-2 rounded-md border border-gray-600 text-gray-200 transition-colors hover:bg-gray-700"
+                  >
+                    Отмена
+                  </button>
                   <button
                     type="submit"
-                    disabled={!inputText.trim()}
+                    disabled={Boolean(isSubmitDisabled)}
                     className="px-5 py-2 bg-accent text-black font-semibold rounded-md transition-all hover:opacity-90 disabled:opacity-50"
                   >
-                    Редактировать
+                    {submitLabel}
                   </button>
                 </div>
               </form>
