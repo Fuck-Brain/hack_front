@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { museo } from "@/lib/fonts";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export default function Header() {
+  const router = useRouter();
   const { isAuthed, user, openLogin, openSignup, logout } = useAuthStore();
+
+  const handleLogout = () => {
+    // 1) чистим auth из стора (и токен, если это делает стор)
+    logout();
+    // 2) на всякий случай чистим токен здесь (если не делается в сторе)
+    try { localStorage.removeItem("token"); } catch {}
+    // 3) уводим на главную и обновляем состояние
+    router.replace("/");
+    router.refresh();
+  };
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
@@ -31,9 +43,7 @@ export default function Header() {
             className="select-none"
             priority
           />
-          <span
-            className={`${museo.className} text-logo text-xl font-semibold tracking-wide`}
-          >
+          <span className={`${museo.className} text-logo text-xl font-semibold tracking-wide`}>
             YooPeople
           </span>
         </Link>
@@ -84,18 +94,17 @@ export default function Header() {
                 >
                   <Avatar className="h-6 w-6">
                     <AvatarFallback>
-                      {user?.name?.[0]?.toUpperCase() ?? "U"}
+                      {(user?.name ?? user?.login ?? "U").slice(0, 1).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <span className="max-w-[140px] truncate">
-                    {user?.name ?? "User"}
+                    {user?.name ?? user?.login ?? "User"}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
+
               <DropdownMenuContent align="end" className="min-w-48">
-                <DropdownMenuLabel className="cursor-default">
-                  Мой аккаунт
-                </DropdownMenuLabel>
+                <DropdownMenuLabel className="cursor-default">Мой аккаунт</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   asChild
@@ -103,8 +112,9 @@ export default function Header() {
                 >
                   <Link href="/profile">Профиль</Link>
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={logout}
+                  onClick={handleLogout}
                   className="cursor-pointer hover:bg-[color:var(--secondary)]"
                 >
                   Выйти

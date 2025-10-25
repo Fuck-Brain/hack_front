@@ -16,9 +16,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 export default function LoginModal() {
-  const { loginOpen, closeLogin, setAuthed } = useAuthStore();
+  const { loginOpen, closeLogin } = useAuthStore();
   const router = useRouter();
   const params = useSearchParams();
+  const { loginSuccess } = useAuthStore.getState();
   const [serverError, setServerError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -38,7 +39,7 @@ export default function LoginModal() {
     try {
       const token = await loginApi(values);
       localStorage.setItem("token", token);
-      setAuthed(true, { id: "me", login: values.login, name: values.login });
+      loginSuccess({ id: "me", login: values.login, name: values.login }, token);
       reset();
       closeLogin();
       router.replace("/");

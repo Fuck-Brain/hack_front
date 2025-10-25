@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button";
 
 export default function SignupModal() {
   const { signupOpen, closeSignup, setAuthed } = useAuthStore();
+  const { loginSuccess } = useAuthStore.getState();
+
   const router = useRouter();
   const params = useSearchParams();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -54,7 +56,8 @@ export default function SignupModal() {
     ) {
       setError("password", {
         type: "manual",
-        message: "Пароль должен содержать ≥8 символов, строчную и заглавную буквы",
+        message:
+          "Пароль должен содержать ≥8 символов, строчную и заглавную буквы",
       });
       return;
     }
@@ -62,11 +65,14 @@ export default function SignupModal() {
     try {
       const token = await signupApi(values);
       localStorage.setItem("token", token);
-      setAuthed(true, {
-        id: "me",
-        login: values.login,
-        name: `${values.name} ${values.surName}`,
-      });
+      loginSuccess(
+        {
+          id: "me",
+          login: values.login,
+          name: `${values.name} ${values.surName}`,
+        },
+        token
+      );
       reset();
       closeSignup();
       router.replace("/");
@@ -87,24 +93,42 @@ export default function SignupModal() {
             <div>
               <Label>Логин*</Label>
               <Input {...register("login", { required: "Введите логин" })} />
-              {errors.login && <p className="text-red-400 text-sm">{errors.login.message}</p>}
+              {errors.login && (
+                <p className="text-red-400 text-sm">{errors.login.message}</p>
+              )}
             </div>
             <div>
               <Label>Пароль*</Label>
-              <Input type="password" {...register("password", { required: "Введите пароль" })} />
-              {errors.password && <p className="text-red-400 text-sm">{errors.password.message}</p>}
+              <Input
+                type="password"
+                {...register("password", { required: "Введите пароль" })}
+              />
+              {errors.password && (
+                <p className="text-red-400 text-sm">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
             <div>
               <Label>Повтор пароля*</Label>
-              <Input type="password" {...register("password2", { required: "Повторите пароль" })} />
-              {errors.password2 && <p className="text-red-400 text-sm">{errors.password2.message}</p>}
+              <Input
+                type="password"
+                {...register("password2", { required: "Повторите пароль" })}
+              />
+              {errors.password2 && (
+                <p className="text-red-400 text-sm">
+                  {errors.password2.message}
+                </p>
+              )}
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label>Фамилия*</Label>
-              <Input {...register("surName", { required: "Введите фамилию" })} />
+              <Input
+                {...register("surName", { required: "Введите фамилию" })}
+              />
             </div>
             <div>
               <Label>Имя*</Label>
@@ -112,14 +136,21 @@ export default function SignupModal() {
             </div>
             <div>
               <Label>Отчество*</Label>
-              <Input {...register("fatherName", { required: "Введите отчество" })} />
+              <Input
+                {...register("fatherName", { required: "Введите отчество" })}
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label>Возраст*</Label>
-              <Input type="number" min={12} max={100} {...register("age", { valueAsNumber: true })} />
+              <Input
+                type="number"
+                min={12}
+                max={100}
+                {...register("age", { valueAsNumber: true })}
+              />
             </div>
             <div>
               <Label>Пол*</Label>
@@ -141,11 +172,16 @@ export default function SignupModal() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Контакт*</Label>
-              <Input {...register("contact", { required: "Введите контакт" })} />
+              <Input
+                {...register("contact", { required: "Введите контакт" })}
+              />
             </div>
             <div>
               <Label>Фото (хэш)</Label>
-              <Input {...register("photoHash")} placeholder="(пока пустая строка)" />
+              <Input
+                {...register("photoHash")}
+                placeholder="(пока пустая строка)"
+              />
             </div>
           </div>
 
