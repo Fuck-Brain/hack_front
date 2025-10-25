@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 export default function SignupModal() {
-  const { signupOpen, closeSignup, setAuthed } = useAuthStore();
+  const { signupOpen, closeSignup } = useAuthStore();
   const { loginSuccess } = useAuthStore.getState();
 
   const router = useRouter();
@@ -63,11 +63,12 @@ export default function SignupModal() {
     }
 
     try {
-      const token = await signupApi(values);
+      const { token, userId } = await signupApi(values);
       localStorage.setItem("token", token);
+      localStorage.setItem("userId", userId);
       loginSuccess(
         {
-          id: "me",
+          id: userId,
           login: values.login,
           name: `${values.name} ${values.surName}`,
         },
@@ -76,8 +77,9 @@ export default function SignupModal() {
       reset();
       closeSignup();
       router.replace("/");
-    } catch (e: any) {
-      setServerError(e.message || "Ошибка регистрации");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : null;
+      setServerError(message || "Ошибка регистрации");
     }
   };
 

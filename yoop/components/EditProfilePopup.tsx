@@ -1,7 +1,6 @@
 // components/ModalPopup.tsx
 "use client";
 
-import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface ModalPopupProps {
@@ -10,7 +9,8 @@ interface ModalPopupProps {
   onSubmit: (text: string) => void;
   title?: string;
   placeholder?: string;
-  initialText?: string;
+  value: string;
+  onChange: (text: string) => void;
 }
 
 export default function ModalPopup({
@@ -19,15 +19,13 @@ export default function ModalPopup({
   onSubmit,
   title = "Редактирование карточки",
   placeholder = "Введите новый текст...",
-  initialText = "",
+  value,
+  onChange,
 }: ModalPopupProps) {
-  const [inputText, setInputText] = useState(initialText);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputText.trim()) {
-      onSubmit(inputText);
-      setInputText("");
+    if (value.trim()) {
+      onSubmit(value);
       onClose();
     }
   };
@@ -62,8 +60,8 @@ export default function ModalPopup({
 
               <form onSubmit={handleSubmit} className="flex flex-col flex-1">
                 <textarea
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
+                  value={value}
+                  onChange={(e) => onChange(e.target.value)}
                   placeholder={placeholder}
                   className="w-full flex-1 p-3 rounded-md bg-[#1c1c1c] text-gray-100 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-accent resize-none text-sm"
                   rows={8}
@@ -73,7 +71,7 @@ export default function ModalPopup({
                 <div className="flex justify-end mt-4">
                   <button
                     type="submit"
-                    disabled={!inputText.trim()}
+                    disabled={!value.trim()}
                     className="px-5 py-2 bg-accent text-black font-semibold rounded-md transition-all hover:opacity-90 disabled:opacity-50"
                   >
                     Редактировать

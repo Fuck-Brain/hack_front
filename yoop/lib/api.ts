@@ -36,22 +36,81 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export async function registerUser(payload: RegisterPayload) {
-  return request<unknown>("/register", {
+  return request<unknown>("/user/register", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
-
-
 export type ApiUser = {
   id: string;
+  login?: string;
+  photoHash?: string | null;
   name: string;
-  age: number;
-  city: string;
-  bio: string;
+  surName?: string;
+  fatherName?: string;
+  age?: number;
+  gender?: string;
+  describeUser?: string | null;
+  city?: string;
+  skills?: string[];
+  interests?: string[];
+  hobbies?: string[];
+  bio?: string | null;
   avatarUrl?: string;
 };
+
+export type UpdateUserPayload = {
+  id: string;
+  login: string;
+  photoHash: string;
+  name: string;
+  surName: string;
+  fatherName: string;
+  age: number;
+  gender: string;
+  describeUser: string;
+  city: string;
+  skills: string[];
+  interests: string[];
+  hobbies: string[];
+};
+
+function normaliseUser(user: Partial<ApiUser>): ApiUser {
+  return {
+    id: user.id ?? "",
+    login: user.login ?? "",
+    photoHash: user.photoHash ?? "",
+    name: user.name ?? "",
+    surName: user.surName ?? "",
+    fatherName: user.fatherName ?? "",
+    age: user.age ?? 0,
+    gender: user.gender ?? "",
+    describeUser: user.describeUser ?? user.bio ?? "",
+    bio: user.bio ?? user.describeUser ?? "",
+    city: user.city ?? "",
+    skills: user.skills ?? [],
+    interests: user.interests ?? [],
+    hobbies: user.hobbies ?? [],
+    avatarUrl: user.avatarUrl,
+  };
+}
+
+export async function fetchUserById(id: string, token?: string) {
+  const user = await request<ApiUser>(`/user/${id}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+  return normaliseUser(user);
+}
+
+export async function updateUserProfile(payload: UpdateUserPayload, token?: string) {
+  const user = await request<Partial<ApiUser>>("/user/update", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+  return normaliseUser({ ...payload, ...user });
+}
 
 function randomName() {
   const names = [
@@ -93,13 +152,24 @@ function randomBio() {
 }
 
 function generateUsers(n = 10): ApiUser[] {
-  return Array.from({ length: n }).map((_, i) => ({
-    id: `u${Date.now()}_${i}`,
-    name: randomName(),
-    age: 20 + Math.floor(Math.random() * 15),
-    city: randomCity(),
-    bio: randomBio(),
-  }));
+  return Array.from({ length: n }).map((_, i) => {
+    const bio = randomBio();
+    return {
+      id: `u${Date.now()}_${i}`,
+      login: `user_${i}`,
+      name: randomName(),
+      surName: "",
+      fatherName: "",
+      age: 20 + Math.floor(Math.random() * 15),
+      city: randomCity(),
+      describeUser: bio,
+      bio,
+      skills: [],
+      interests: [],
+      hobbies: [],
+      photoHash: "",
+    } satisfies ApiUser;
+  });
 }
 
 export async function fetchRandomUsers(limit = 10): Promise<ApiUser[]> {

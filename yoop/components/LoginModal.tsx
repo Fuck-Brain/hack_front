@@ -37,14 +37,16 @@ export default function LoginModal() {
   const onSubmit = async (values: LoginInput) => {
     setServerError(null);
     try {
-      const token = await loginApi(values);
+      const { token, userId } = await loginApi(values);
       localStorage.setItem("token", token);
-      loginSuccess({ id: "me", login: values.login, name: values.login }, token);
+      localStorage.setItem("userId", userId);
+      loginSuccess({ id: userId, login: values.login, name: values.login }, token);
       reset();
       closeLogin();
       router.replace("/");
-    } catch (e: any) {
-      setServerError(e.message || "Ошибка авторизации");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : null;
+      setServerError(message || "Ошибка авторизации");
     }
   };
 
