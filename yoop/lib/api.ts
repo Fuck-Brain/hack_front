@@ -1,3 +1,49 @@
+// lib/api.ts
+export type RegisterPayload = {
+  login: string;
+  password: string;
+  photoHash?: string | null;
+  name: string;
+  surName: string;
+  fatherName: string;
+  age: number;
+  gender: "male" | "female" | "other";
+  describeUser?: string | null;
+  skills?: string | null;
+  city: string;
+  contact?: string | null;
+};
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE || "";
+
+// общий helper
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    cache: "no-store",
+    headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
+    ...init,
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`${res.status} ${text || "Request failed"}`);
+  }
+  try {
+    return (await res.json()) as T;
+  } catch {
+    // бэк может вернуть 200 без тела
+    return {} as T;
+  }
+}
+
+export async function registerUser(payload: RegisterPayload) {
+  return request<unknown>("/register", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+
+
 export type ApiUser = {
   id: string;
   name: string;
