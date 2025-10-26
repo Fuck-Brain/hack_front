@@ -7,7 +7,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { UserCard } from "./UserCard";
+import UserCard from "./UserCard";
+
 import { fetchRandomUsers, type ApiUser } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 

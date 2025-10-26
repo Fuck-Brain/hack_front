@@ -103,7 +103,7 @@ export default function ProfilePage() {
         const value = changes.describeUser.trim();
         if (value !== (prev.describeUser ?? "")) changed = true;
         next.describeUser = value;
-        next.bio = value;
+        // next.bio = value;
       }
 
       if (changes.skills !== undefined) {
@@ -179,9 +179,21 @@ export default function ProfilePage() {
         gender: user.gender ?? "male",
         describeUser: user.describeUser ?? "",
         city: user.city ?? "",
-        skills: user.skills ?? [],
-        interests: user.interests ?? [],
-        hobbies: user.hobbies ?? [],
+
+        contact: user.contact ?? "",
+
+        // Нормализуем к string[]
+        skills: (user.skills ?? [])
+          .map((s: any) => (typeof s === "string" ? s : s?.skillName))
+          .filter(Boolean) as string[],
+
+        interests: (user.interests ?? [])
+          .map((i: any) => (typeof i === "string" ? i : i?.interestName))
+          .filter(Boolean) as string[],
+
+        hobbies: (user.hobbies ?? [])
+          .map((h: any) => (typeof h === "string" ? h : h?.hobbyName))
+          .filter(Boolean) as string[],
       };
 
       const updated = await updateUserProfile(payload, token);
@@ -202,22 +214,32 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="p-6 text-red-400">
-        {error || "Профиль не найден"}
-      </div>
+      <div className="p-6 text-red-400">{error || "Профиль не найден"}</div>
     );
   }
 
   const getAnimation = (direction: string) => {
     switch (direction) {
       case "left":
-        return { hidden: { x: -100, opacity: 0 }, visible: { x: 0, opacity: 1 } };
+        return {
+          hidden: { x: -100, opacity: 0 },
+          visible: { x: 0, opacity: 1 },
+        };
       case "right":
-        return { hidden: { x: 100, opacity: 0 }, visible: { x: 0, opacity: 1 } };
+        return {
+          hidden: { x: 100, opacity: 0 },
+          visible: { x: 0, opacity: 1 },
+        };
       case "up":
-        return { hidden: { y: -100, opacity: 0 }, visible: { y: 0, opacity: 1 } };
+        return {
+          hidden: { y: -100, opacity: 0 },
+          visible: { y: 0, opacity: 1 },
+        };
       case "down":
-        return { hidden: { y: 100, opacity: 0 }, visible: { y: 0, opacity: 1 } };
+        return {
+          hidden: { y: 100, opacity: 0 },
+          visible: { y: 0, opacity: 1 },
+        };
       default:
         return { hidden: { opacity: 0 }, visible: { opacity: 1 } };
     }
@@ -255,7 +277,9 @@ export default function ProfilePage() {
         <div className="space-y-1">
           {error && <p className="text-sm text-red-400">{error}</p>}
           {!error && dirty && (
-            <p className="text-sm text-yellow-400">Есть несохранённые изменения</p>
+            <p className="text-sm text-yellow-400">
+              Есть несохранённые изменения
+            </p>
           )}
           {success && <p className="text-sm text-green-400">{success}</p>}
         </div>

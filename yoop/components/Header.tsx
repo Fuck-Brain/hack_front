@@ -20,13 +20,10 @@ export default function Header() {
   const { isAuthed, user, openLogin, openSignup, logout } = useAuthStore();
 
   const handleLogout = () => {
-    // 1) чистим auth из стора (и токен, если это делает стор)
     logout();
-    // 2) на всякий случай чистим токен здесь (если не делается в сторе)
     try {
       localStorage.removeItem("token");
     } catch {}
-    // 3) уводим на главную и обновляем состояние
     router.replace("/");
     router.refresh();
   };

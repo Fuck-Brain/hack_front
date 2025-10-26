@@ -1,18 +1,33 @@
+"use client";
+
 import { FC, useMemo, useState } from "react";
 import ModalPopup from "../EditProfilePopup";
 import { ApiUser } from "@/lib/api";
+type ProfileUpdate = Partial<
+  Omit<ApiUser, "skills" | "interests" | "hobbies"> & {
+    skills: string[];
+    interests: string[];
+    hobbies: string[];
+  }
+>;
 
 type UserCardProps = {
   user: ApiUser;
   variant: "info" | "description" | "skills" | "photo";
-  onUpdate?: (changes: Partial<ApiUser>) => void;
+  onUpdate?: (changes: Partial<ApiUser>) => void; // ← было Partial<ApiUser>
 };
 
 type ListField = "skills" | "interests" | "hobbies";
 
 type ListDraftState = Record<ListField, string[]>;
-
 type ListInputState = Record<ListField, string>;
+
+const toApiList = <K extends "skillName" | "interestName" | "hobbyName">(
+  items: string[],
+  key: K
+) => {
+  return items.map((name) => ({ [key]: name })) as unknown;
+};
 
 const createEmptyLists = (): ListDraftState => ({
   skills: [],
@@ -27,16 +42,35 @@ const createEmptyInputs = (): ListInputState => ({
 });
 
 const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
+  // Приводим возможные старые форматы (массив объектов) к string[]
+  const asStringList = (list: unknown): string[] => {
+    if (!Array.isArray(list)) return [];
+    return list
+      .map((it: any) => {
+        if (typeof it === "string") return it;
+        // поддержка старых структур { skillName }, { interestName }, { hobbyName }
+        return it?.skillName ?? it?.interestName ?? it?.hobbyName ?? "";
+      })
+      .filter((s: string) => s && typeof s === "string");
+  };
+
   const [isModalOpen, setIsModalOpen] = useState(false);
+
   const [infoDraft, setInfoDraft] = useState({
     surName: "",
     name: "",
     fatherName: "",
     age: "",
   });
+
   const [textDraft, setTextDraft] = useState("");
-  const [listDraft, setListDraft] = useState<ListDraftState>(() => createEmptyLists());
-  const [listInputs, setListInputs] = useState<ListInputState>(() => createEmptyInputs());
+
+  const [listDraft, setListDraft] = useState<ListDraftState>(() =>
+    createEmptyLists()
+  );
+  const [listInputs, setListInputs] = useState<ListInputState>(() =>
+    createEmptyInputs()
+  );
 
   const fullName = useMemo(() => {
     const fio = [user.surName, user.name, user.fatherName]
@@ -47,6 +81,7 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
 
   const handleEditClick = () => {
     if (variant === "photo") return;
+
     if (variant === "info") {
       setInfoDraft({
         surName: user.surName ?? "",
@@ -58,12 +93,13 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
       setTextDraft(user.describeUser ?? "");
     } else if (variant === "skills") {
       setListDraft({
-        skills: [...(user.skills ?? [])],
-        interests: [...(user.interests ?? [])],
-        hobbies: [...(user.hobbies ?? [])],
+        skills: asStringList(user.skills),
+        interests: asStringList(user.interests),
+        hobbies: asStringList(user.hobbies),
       });
       setListInputs(createEmptyInputs());
     }
+
     setIsModalOpen(true);
   };
 
@@ -98,21 +134,30 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
 
   const handleListSubmit = () => {
     if (!onUpdate) return;
-    onUpdate({
-      skills: [...listDraft.skills],
-      interests: [...listDraft.interests],
-      hobbies: [...listDraft.hobbies],
-    });
-    setIsModalOpen(false);
-  };
 
-  const handleInputChange = (field: ListField, value: string) => {
-    setListInputs((prev) => ({ ...prev, [field]: value }));
+    const payload: Partial<ApiUser> = {
+      skills: toApiList(
+        listDraft.skills,
+        "skillName"
+      ) as Partial<ApiUser>["skills"],
+      interests: toApiList(
+        listDraft.interests,
+        "interestName"
+      ) as Partial<ApiUser>["interests"],
+      hobbies: toApiList(
+        listDraft.hobbies,
+        "hobbyName"
+      ) as Partial<ApiUser>["hobbies"],
+    };
+
+    onUpdate(payload);
+    setIsModalOpen(false);
   };
 
   const handleAddItem = (field: ListField) => {
     const value = listInputs[field].trim();
     if (!value) return;
+
     setListDraft((prev) => {
       const existing = prev[field];
       if (existing.some((item) => item.toLowerCase() === value.toLowerCase())) {
@@ -120,6 +165,7 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
       }
       return { ...prev, [field]: [...existing, value] };
     });
+
     setListInputs((prev) => ({ ...prev, [field]: "" }));
   };
 
@@ -129,7 +175,9 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
       [field]: prev[field].filter((_, i) => i !== index),
     }));
   };
-
+  const handleInputChange = (field: ListField, value: string) => {
+    setListInputs((prev) => ({ ...prev, [field]: value }));
+  };
   const renderTagList = (
     title: string,
     field: ListField,
@@ -163,6 +211,7 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
           </button>
         </div>
       </div>
+
       {items.length > 0 ? (
         <ul className="flex flex-wrap gap-2">
           {items.map((item, index) => (
@@ -190,16 +239,21 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
   const renderListSection = () => (
     <div className="space-y-6">
       {renderTagList("Навыки", "skills", listDraft.skills, "Добавьте навык")}
-      {renderTagList("Интересы", "interests", listDraft.interests, "Добавьте интерес")}
+      {renderTagList(
+        "Интересы",
+        "interests",
+        listDraft.interests,
+        "Добавьте интерес"
+      )}
       {renderTagList("Хобби", "hobbies", listDraft.hobbies, "Добавьте хобби")}
     </div>
   );
 
   const renderListPreview = () => {
     const sections: Array<{ title: string; items: string[] }> = [
-      { title: "Навыки", items: user.skills ?? [] },
-      { title: "Интересы", items: user.interests ?? [] },
-      { title: "Хобби", items: user.hobbies ?? [] },
+      { title: "Навыки", items: asStringList(user.skills) },
+      { title: "Интересы", items: asStringList(user.interests) },
+      { title: "Хобби", items: asStringList(user.hobbies) },
     ];
 
     return (
@@ -233,12 +287,16 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
     case "info":
       return (
         <>
-          <div className="card-base cursor-pointer p-4" onClick={handleEditClick}>
+          <div
+            className="card-base cursor-pointer p-4"
+            onClick={handleEditClick}
+          >
             <h2 className="text-lg font-semibold text-accent">
               {fullName}
               {user.age ? ` (${user.age} лет)` : ""}
             </h2>
           </div>
+
           <ModalPopup
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
@@ -252,41 +310,56 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
                 <input
                   value={infoDraft.surName}
                   onChange={(e) =>
-                    setInfoDraft((prev) => ({ ...prev, surName: e.target.value }))
+                    setInfoDraft((prev) => ({
+                      ...prev,
+                      surName: e.target.value,
+                    }))
                   }
                   className="rounded-md border border-gray-600 bg-[#1c1c1c] px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-accent"
                   placeholder="Введите фамилию"
                   autoFocus
                 />
               </label>
+
               <label className="flex flex-col gap-2 text-sm text-gray-200">
                 <span>Имя</span>
                 <input
                   value={infoDraft.name}
                   onChange={(e) =>
-                    setInfoDraft((prev) => ({ ...prev, name: e.target.value }))
+                    setInfoDraft((prev) => ({
+                      ...prev,
+                      name: e.target.value,
+                    }))
                   }
                   className="rounded-md border border-gray-600 bg-[#1c1c1c] px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-accent"
                   placeholder="Введите имя"
                 />
               </label>
+
               <label className="flex flex-col gap-2 text-sm text-gray-200">
                 <span>Отчество</span>
                 <input
                   value={infoDraft.fatherName}
                   onChange={(e) =>
-                    setInfoDraft((prev) => ({ ...prev, fatherName: e.target.value }))
+                    setInfoDraft((prev) => ({
+                      ...prev,
+                      fatherName: e.target.value,
+                    }))
                   }
                   className="rounded-md border border-gray-600 bg-[#1c1c1c] px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-accent"
                   placeholder="Введите отчество"
                 />
               </label>
+
               <label className="flex flex-col gap-2 text-sm text-gray-200">
                 <span>Возраст</span>
                 <input
                   value={infoDraft.age}
                   onChange={(e) =>
-                    setInfoDraft((prev) => ({ ...prev, age: e.target.value }))
+                    setInfoDraft((prev) => ({
+                      ...prev,
+                      age: e.target.value,
+                    }))
                   }
                   className="rounded-md border border-gray-600 bg-[#1c1c1c] px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-accent"
                   placeholder="Например, 21"
@@ -297,15 +370,21 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
           </ModalPopup>
         </>
       );
+
     case "description":
       return (
         <>
-          <div className="card-base cursor-pointer p-4 min-h-[20vh]" onClick={handleEditClick}>
+          <div
+            className="card-base cursor-pointer p-4 min-h-[20vh]"
+            onClick={handleEditClick}
+          >
             <h3 className="text-lg font-semibold mb-2 text-accent">О себе</h3>
             <p className="text-gray-300">
-              {(user.describeUser && user.describeUser.trim()) || "Нет описания"}
+              {(user.describeUser && user.describeUser.trim()) ||
+                "Нет описания"}
             </p>
           </div>
+
           <ModalPopup
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
@@ -324,6 +403,7 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
           </ModalPopup>
         </>
       );
+
     case "skills":
       return (
         <>
@@ -333,6 +413,7 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
           >
             {renderListPreview()}
           </div>
+
           <ModalPopup
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
@@ -343,6 +424,7 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
           </ModalPopup>
         </>
       );
+
     case "photo":
       return (
         <div className="card-base p-4 flex flex-col items-center justify-center">
@@ -352,6 +434,7 @@ const UserCard: FC<UserCardProps> = ({ user, variant, onUpdate }) => {
           <h3 className="mt-3 text-lg font-medium text-accent">{fullName}</h3>
         </div>
       );
+
     default:
       return null;
   }
