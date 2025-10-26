@@ -609,6 +609,89 @@ export async function apiGetMatches(userId: string): Promise<ApiMatchUser[]> {
 }
 
 // =============== МОКИ ДЛЯ ЛОКАЛЬНОЙ ОТЛАДКИ UI ===============
+// function rnd<T>(arr: T[]) {
+//   return arr[Math.floor(Math.random() * arr.length)];
+// }
+
+// function genMockUser(i: number): ApiUser {
+//   const names = [
+//     "Алиса",
+//     "Борис",
+//     "Вика",
+//     "Глеб",
+//     "Диана",
+//     "Егор",
+//     "Жанна",
+//     "Зоя",
+//     "Кирилл",
+//     "Лена",
+//   ];
+//   const cities = [
+//     "Москва",
+//     "СПб",
+//     "Казань",
+//     "Екатеринбург",
+//     "Самара",
+//     "Новосибирск",
+//   ];
+//   const desc = [
+//     "Люблю путешествия и кофе",
+//     "Фронтенд-разработчик, ищу вдохновение",
+//     "Обожаю котиков и пробежки",
+//     "Играю на гитаре, фанат рока",
+//     "Пишу стихи и изучаю Python",
+//   ];
+
+//   return {
+//     id: `u_${Date.now()}_${i}`,
+//     login: `user_${i}`,
+//     hashPassword: "",
+//     photoHash: "",
+//     name: rnd(names),
+//     surName: "Тестов",
+//     fatherName: "Тестович",
+//     age: 20 + Math.floor(Math.random() * 15),
+//     gender: "other",
+//     describeUser: rnd(desc),
+//     city: rnd(cities),
+//     contact: "@test",
+//     skills: [
+//       { id: `s_${i}`, userId: `u_${i}`, skillName: "React", user: `u_${i}` },
+//     ],
+//     interests: [
+//       { id: `i_${i}`, userId: `u_${i}`, interestName: "UI", user: `u_${i}` },
+//     ],
+//     hobbies: [
+//       { id: `h_${i}`, userId: `u_${i}`, hobbyName: "Музыка", user: `u_${i}` },
+//     ],
+//     requests: [],
+//   };
+// }
+
+// export async function fetchRandomUsers(limit = 10): Promise<ApiUser[]> {
+//   if (USE_MOCKS) {
+//     await new Promise((r) => setTimeout(r, 500));
+//     return Array.from({ length: limit }).map((_, i) => genMockUser(i));
+//   }
+//   // TODO: когда появится реальный эндпоинт
+//   return [];
+// }
+
+// export async function fetchUsersByPrompt(
+//   prompt: string,
+//   limit = 10
+// ): Promise<ApiUser[]> {
+//   if (USE_MOCKS) {
+//     await new Promise((r) => setTimeout(r, 700));
+//     return Array.from({ length: limit }).map((_, i) => genMockUser(i));
+//   }
+//   // В реальности у нас теперь flow через /user/request/create -> /result/getUserRecommendations/{id}
+//   // Поэтому эту функцию в проде лучше не использовать.
+//   return [];
+// }
+
+// =================================================
+// =============== МОКИ ДЛЯ ЛОКАЛЬНОЙ ОТЛАДКИ UI ===============
 function rnd<T>(arr: T[]) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -626,6 +709,18 @@ function genMockUser(i: number): ApiUser {
     "Кирилл",
     "Лена",
   ];
+  const surnames = [
+    "Иванова",
+    "Петров",
+    "Сидорова",
+    "Смирнов",
+    "Козлова",
+    "Волков",
+    "Новикова",
+    "Морозов",
+    "Федорова",
+    "Лебедев",
+  ];
   const cities = [
     "Москва",
     "СПб",
@@ -633,59 +728,108 @@ function genMockUser(i: number): ApiUser {
     "Екатеринбург",
     "Самара",
     "Новосибирск",
+    "Нижний Новгород",
+    "Краснодар",
+    "Челябинск",
+    "Уфа",
   ];
-  const desc = [
-    "Люблю путешествия и кофе",
-    "Фронтенд-разработчик, ищу вдохновение",
-    "Обожаю котиков и пробежки",
-    "Играю на гитаре, фанат рока",
-    "Пишу стихи и изучаю Python",
+  const descriptions = [
+    "Фронтенд-разработчик, люблю React и современный UI/UX дизайн",
+    "Backend-инженер, фанат чистой архитектуры и Python",
+    "ML-энтузиаст, работаю с нейросетями и LLM",
+    "UI/UX дизайнер, создаю красивые интерфейсы и пользовательский опыт",
+    "Fullstack-разработчик, люблю решать сложные задачи",
+    "DevOps инженер, автоматизирую процессы и инфраструктуру",
+    "Мобильный разработчик, создаю приложения для iOS и Android",
+    "Блокчейн-разработчик, работаю с Web3 технологиями",
+    "Data Science специалист, анализирую данные и строю модели",
+    "QA инженер, обеспечиваю качество продукта и автоматизацию тестирования",
+  ];
+  const skillsList = [
+    ["React", "TypeScript", "Node.js", "MongoDB"],
+    ["Python", "Django", "PostgreSQL", "Redis"],
+    ["Python", "PyTorch", "TensorFlow", "NLP"],
+    ["Figma", "Adobe XD", "Sketch", "User Research"],
+    ["JavaScript", "React", "Next.js", "GraphQL"],
+    ["Docker", "Kubernetes", "AWS", "Terraform"],
+    ["Swift", "Kotlin", "Flutter", "React Native"],
+    ["Solidity", "Web3.js", "Ethereum", "Smart Contracts"],
+    ["Python", "Pandas", "Scikit-learn", "Jupyter"],
+    ["Selenium", "Cypress", "JMeter", "Postman"],
+  ];
+  const interestsList = [
+    ["UI/UX", "Дизайн", "Анимации"],
+    ["Backend", "Базы данных", "API"],
+    ["ML", "LLM", "Нейросети"],
+    ["Дизайн", "UX Research", "Прототипирование"],
+    ["Fullstack", "Web Development", "Паттерны проектирования"],
+    ["DevOps", "CI/CD", "Контейнеризация"],
+    ["Мобильная разработка", "iOS", "Android"],
+    ["Blockchain", "Web3", "DeFi"],
+    ["Data Science", "Аналитика", "Визуализация данных"],
+    ["Тестирование", "Автоматизация", "Качество кода"],
+  ];
+  const hobbiesList = [
+    ["Фотография", "Путешествия", "Йога"],
+    ["Гитара", "Футбол", "Шахматы"],
+    ["Чтение", "Бег", "Кофе"],
+    ["Рисование", "Веб-дизайн", "Спорт"],
+    ["Видеоигры", "Музыка", "Кампинг"],
+    ["Горный туризм", "Велоспорт", "Кайтсерфинг"],
+    ["Скалолазание", "Танцы", "Настольные игры"],
+    ["Криптовалюты", "Технологии", "Новости"],
+    ["Статистика", "Математика", "Исследования"],
+    ["Пасьянс", "Тестирование", "Оптимизация"],
   ];
 
+  const gender = i % 2 === 0 ? "female" : "male";
+  const idx = i % names.length;
+
   return {
-    id: `u_${Date.now()}_${i}`,
+    id: `u_mock_${i}_${Date.now()}`,
     login: `user_${i}`,
     hashPassword: "",
     photoHash: "",
-    name: rnd(names),
-    surName: "Тестов",
-    fatherName: "Тестович",
-    age: 20 + Math.floor(Math.random() * 15),
-    gender: "other",
-    describeUser: rnd(desc),
-    city: rnd(cities),
-    contact: "@test",
-    skills: [
-      { id: `s_${i}`, userId: `u_${i}`, skillName: "React", user: `u_${i}` },
-    ],
-    interests: [
-      { id: `i_${i}`, userId: `u_${i}`, interestName: "UI", user: `u_${i}` },
-    ],
-    hobbies: [
-      { id: `h_${i}`, userId: `u_${i}`, hobbyName: "Музыка", user: `u_${i}` },
-    ],
+    name: names[idx],
+    surName: surnames[idx],
+    fatherName: gender === "female" ? "Сергеевна" : "Сергеевич",
+    age: 22 + Math.floor(Math.random() * 13),
+    gender: gender,
+    describeUser: descriptions[i % descriptions.length],
+    city: cities[i % cities.length],
+    contact: `@user_${i}`,
+    skills: skillsList[i % skillsList.length].map((s, idx) => ({
+      id: `skill_${i}_${idx}`,
+      userId: `u_${i}`,
+      skillName: s,
+      user: `u_${i}`,
+    })),
+    interests: interestsList[i % interestsList.length].map((s, idx) => ({
+      id: `interest_${i}_${idx}`,
+      userId: `u_${i}`,
+      interestName: s,
+      user: `u_${i}`,
+    })),
+    hobbies: hobbiesList[i % hobbiesList.length].map((s, idx) => ({
+      id: `hobby_${i}_${idx}`,
+      userId: `u_${i}`,
+      hobbyName: s,
+      user: `u_${i}`,
+    })),
     requests: [],
   };
 }
 
 export async function fetchRandomUsers(limit = 10): Promise<ApiUser[]> {
-  if (USE_MOCKS) {
-    await new Promise((r) => setTimeout(r, 500));
-    return Array.from({ length: limit }).map((_, i) => genMockUser(i));
-  }
-  // TODO: когда появится реальный эндпоинт
-  return [];
+  await new Promise((r) => setTimeout(r, 500));
+  return Array.from({ length: limit }).map((_, i) => genMockUser(i));
 }
 
 export async function fetchUsersByPrompt(
   prompt: string,
   limit = 10
 ): Promise<ApiUser[]> {
-  if (USE_MOCKS) {
-    await new Promise((r) => setTimeout(r, 700));
-    return Array.from({ length: limit }).map((_, i) => genMockUser(i));
-  }
-  // В реальности у нас теперь flow через /user/request/create -> /result/getUserRecommendations/{id}
-  // Поэтому эту функцию в проде лучше не использовать.
-  return [];
+  await new Promise((r) => setTimeout(r, 700));
+  // пока промт игнорируем — возвращаем моки
+  return Array.from({ length: limit }).map((_, i) => genMockUser(i));
 }
