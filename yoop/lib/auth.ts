@@ -1,8 +1,8 @@
 // управляет сетевыми вызовами (валидация, статусы, JWT).
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+import { BASE_URL } from "./api";
 
 function ensureBase() {
-  if (!API_BASE) throw new Error("Нет API");
+  if (!BASE_URL) throw new Error("Нет API");
 }
 
 export type LoginInput = { login: string; password: string };
@@ -28,7 +28,7 @@ export type AuthResponse = {
 
 export async function loginApi(data: LoginInput): Promise<AuthResponse> {
   ensureBase();
-  const res = await fetch(`${API_BASE}/user/login`, {
+  const res = await fetch(`${BASE_URL}/user/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     cache: "no-store",
@@ -72,7 +72,7 @@ export async function signupApi(data: SignupInput): Promise<AuthResponse> {
     contact: data.contact,
   };
 
-  const res = await fetch(`${API_BASE}/user/register`, {
+  const res = await fetch(`${BASE_URL}/user/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     cache: "no-store",

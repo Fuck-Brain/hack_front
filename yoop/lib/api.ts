@@ -1,9 +1,7 @@
 // lib/api.ts
 
-const API_DEBUG =
-  process.env.NEXT_PUBLIC_API_DEBUG === "1" ||
-  process.env.NEXT_PUBLIC_API_DEBUG === "true";
-
+export const BASE_URL = "https://localhost:80/api"; // <- АДРЕСС
+const API_DEBUG = false;
 function redact(key: string, value: unknown) {
   const k = key.toLowerCase();
   if (
@@ -53,10 +51,10 @@ function logRequestStage(stage: string, payload: Record<string, unknown>) {
 }
 
 // =============== БАЗОВЫЙ HTTP-ХЕЛПЕР ===============
-const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_BASE || "";
-export const BASE_URL = RAW_BASE_URL.endsWith("/")
-  ? RAW_BASE_URL.slice(0, -1)
-  : RAW_BASE_URL;
+const RAW_BASE_URL = process.env.NEXT_PUBLIC_BASE_API || "";
+// export const BASE_URL = RAW_BASE_URL.endsWith("/")
+//   ? RAW_BASE_URL.slice(0, -1)
+//   : RAW_BASE_URL;
 const USE_MOCKS =
   (process.env.NEXT_PUBLIC_USE_MOCKS ?? "").toLowerCase() === "true";
 const DEFAULT_TIMEOUT_MS = 20000;
