@@ -1,115 +1,72 @@
 "use client";
-import { useEffect, useState } from "react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import { UserCard } from "./UserCard";
-import {
-  fetchRandomUsers,
-  fetchUsersByPrompt,
-  swipeUser,
-  type ApiUser,
-} from "@/lib/api";
-import { Skeleton } from "@/components/ui/skeleton";
 
-export default function SearchCarousel({
-  prompt,
-  requestKey,
-  loading, // ← приходит от родителя
-}: {
-  prompt: string;
-  requestKey?: string | null;
-  loading: boolean;
-}) {
-  const [users, setUsers] = useState<ApiUser[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import SkeletonCard from "@/components/SkeletonCard";
+import type { ApiProfile } from "@/lib/api";
 
-  // Стартовая подгрузка случайных (когда ещё нет requestKey)
-  useEffect(() => {
-    let alive = true;
-    if (!requestKey) {
-      fetchRandomUsers(10)
-        .then((u) => alive && setUsers(u))
-        .catch((e) => alive && setError(e.message));
-    }
-    return () => {
-      alive = false;
-    };
-  }, [requestKey]);
+type Props = {
+  data?: ApiProfile[] | null; // результаты поиска
+  loading?: boolean; // флаг загрузки для скелетонов
+};
 
-  // Поиск по prompt (когда появляется requestKey)
-  useEffect(() => {
-    let alive = true;
-    if (requestKey && prompt.trim()) {
-      fetchUsersByPrompt(prompt, 10)
-        .then((u) => alive && setUsers(u))
-        .catch((e) => alive && setError(e.message));
-    }
-    return () => {
-      alive = false;
-    };
-  }, [requestKey, prompt]);
+export default function SearchCarousel({ data, loading }: Props) {
+  if (loading) {
+    return (
+      <div className="flex gap-6 overflow-x-auto pb-2">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </div>
+    );
+  }
 
-  const onLike = async (id: string) => {
-    const idemKey = `${id}:${Date.now()}`;
-    setUsers((prev) => prev?.filter((u) => u.id !== id) ?? prev);
-    try {
-      await swipeUser(id, "like", idemKey);
-    } catch {}
-  };
+  const items = data ?? [];
 
-  const onDislike = async (id: string) => {
-    const idemKey = `${id}:${Date.now()}`;
-    setUsers((prev) => prev?.filter((u) => u.id !== id) ?? prev);
-    try {
-      await swipeUser(id, "dislike", idemKey);
-    } catch {}
-  };
-
-  const showSkeletons = loading || users === null;
+  if (items.length === 0) {
+    return <p className="text-neutral-500">Ничего не найдено.</p>;
+  }
 
   return (
-    <Carousel opts={{ align: "start" }} className="w-full">
-      <CarouselContent>
-        {showSkeletons &&
-          Array.from({ length: 3 }).map((_, i) => (
-            <CarouselItem
-              key={i}
-              className="basis-full sm:basis-1/2 lg:basis-1/3"
-            >
-              <Skeleton className="h-[360px] w-full rounded-2xl" />
-            </CarouselItem>
-          ))}
+    <div className="flex gap-6 overflow-x-auto pb-2">
+      {items.map((p) => (
+        <Card key={p.id} className="w-64 shrink-0">
+          <CardContent className="p-3">
+            <div className="aspect-[4/5] overflow-hidden rounded-xl bg-neutral-200" />
+            <div className="mt-3 space-y-1">
+              <div className="flex items-center justify-between">
+                <h3 className="truncate font-semibold" title={p.name}>
+                  {p.name}
+                </h3>
+                {typeof p.age === "number" && (
+                  <span className="text-sm text-neutral-600">{p.age}</span>
+                )}
+              </div>
+              {p.city && (
+                <p className="truncate text-sm text-neutral-600">{p.city}</p>
+              )}
+              {p.bio && (
+                <p className="line-clamp-2 text-sm text-neutral-700">{p.bio}</p>
+              )}
 
-        {!showSkeletons &&
-          users &&
-          users.map((u) => (
-            <CarouselItem
-              key={u.id}
-              className="basis-full sm:basis-1/2 lg:basis-1/3"
-            >
-              <UserCard
-                user={u}
-                clickable
-                actions
-                onLike={onLike}
-                onDislike={onDislike}
-              />
-            </CarouselItem>
-          ))}
+              <div className="mt-3 flex gap-2">
+                <Button variant="outline" className="flex-1">
+                  Дизлайк
+                </Button>
+                <Button className="flex-1">Лайк</Button>
+              </div>
 
-        {error && (
-          <CarouselItem className="basis-full">
-            <div className="text-sm text-red-400">Ошибка загрузки: {error}</div>
-          </CarouselItem>
-        )}
-      </CarouselContent>
-      <CarouselPrevious />
-      <CarouselNext />
-    </Carousel>
+              <Link
+                href={`/user/${p.id}`}
+                className="mt-2 inline-block text-sm underline"
+              >
+                Профиль
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }

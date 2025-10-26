@@ -1,4 +1,3 @@
-// lib/api.ts
 export type RegisterPayload = {
   login: string;
   password: string;
@@ -19,7 +18,7 @@ const BASE_URL = RAW_BASE_URL.endsWith("/")
   ? RAW_BASE_URL.slice(0, -1)
   : RAW_BASE_URL;
 
-// общий helper
+// общий
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const targetPath = path.startsWith("/") ? path : `/${path}`;
   const headers = new Headers(init.headers ?? {});
@@ -92,6 +91,22 @@ export type UpdateUserPayload = {
   hobbies: string[];
 };
 
+export type CreateRequestBody = {
+  userId: string;
+  name: string; // поле обязателно
+  text: string; // промт
+};
+
+// Вариант ответа (может измениться)
+export type ApiProfile = {
+  id: string;
+  name: string;
+  age: number;
+  city: string;
+  bio: string;
+  avatarUrl?: string | null;
+};
+
 function normaliseUser(user: Partial<ApiUser>): ApiUser {
   return {
     id: user.id ?? "",
@@ -119,13 +134,25 @@ export async function fetchUserById(id: string, token?: string) {
   return normaliseUser(user);
 }
 
-export async function updateUserProfile(payload: UpdateUserPayload, token?: string) {
+export async function updateUserProfile(
+  payload: UpdateUserPayload,
+  token?: string
+) {
   const user = await request<Partial<ApiUser>>("/user/update", {
     method: "PUT",
     body: JSON.stringify(payload),
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
   });
   return normaliseUser({ ...payload, ...user });
+}
+
+export async function apiCreateRequest(
+  body: CreateRequestBody
+): Promise<ApiProfile[]> {
+  return request<ApiProfile[]>("/request/create", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
 }
 
 function randomName() {
@@ -158,7 +185,7 @@ function randomCity() {
 
 function randomBio() {
   const bios = [
-    "Люблю путешествия и кофе",
+    "Люблю путешествия и коa;kе",
     "Фронтенд-разработчик, ищу вдохновение",
     "Обожаю котиков и утренние пробежки",
     "Играю на гитаре, фанат рока",
