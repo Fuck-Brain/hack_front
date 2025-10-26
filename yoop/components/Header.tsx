@@ -134,6 +134,12 @@ export default function Header() {
                 >
                   <Link href="/likes">История лайков</Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  asChild
+                  className="cursor-pointer hover:bg-[color:var(--secondary)]"
+                >
+                  <Link href="/matches">Взаимные лайки</Link>
+                </DropdownMenuItem>
 
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

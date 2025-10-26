@@ -260,3 +260,25 @@ export async function apiGetLiked(userId: string): Promise<LikedUser[]> {
     method: "GET",
   });
 }
+
+export type ApiMatchUser = {
+  id: string;
+  login: string;
+  photoHash: string;
+  name: string;
+  surName: string;
+  fatherName: string;
+  age: number;
+  gender: string;
+  describeUser: string;
+  city: string;
+  skills: string[];
+  interests: string[];
+  hobbies: string[];
+};
+
+export async function apiGetMatches(userId: string): Promise<ApiMatchUser[]> {
+  return request<ApiMatchUser[]>(`/user/${userId}/getMatches`, {
+    method: "GET",
+  });
+}
