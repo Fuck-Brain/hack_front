@@ -238,3 +238,25 @@ export async function swipeUser(
   await new Promise((r) => setTimeout(r, 300));
   return { ok: true };
 }
+
+export type LikedUser = {
+  id: string;
+  login: string;
+  photoHash: string | null;
+  name: string;
+  surName: string;
+  fatherName: string;
+  age: number;
+  gender: string;
+  describeUser: string | null;
+  city: string;
+  skills: string[];
+  interests: string[];
+  hobbies: string[];
+};
+
+export async function apiGetLiked(userId: string): Promise<LikedUser[]> {
+  return request<LikedUser[]>(`/user/${encodeURIComponent(userId)}/getLiked`, {
+    method: "GET",
+  });
+}

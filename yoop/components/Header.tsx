@@ -128,6 +128,13 @@ export default function Header() {
                 >
                   <Link href="/profile">Профиль</Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  asChild
+                  className="cursor-pointer hover:bg-[color:var(--secondary)]"
+                >
+                  <Link href="/likes">История лайков</Link>
+                </DropdownMenuItem>
+
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}
