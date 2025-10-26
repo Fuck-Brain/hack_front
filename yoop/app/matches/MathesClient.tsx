@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
-import { type ApiMatchUser } from "@/lib/api";
+import { apiGetMatches, type ApiMatchUser } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -24,64 +24,16 @@ export default function MatchesPage() {
 
   // загрузка совпадений, когда всё готово
   useEffect(() => {
-    if (!hydrated || !isAuthed || !user?.id) return;
+    const uid = user?.id;
+    if (!hydrated || !isAuthed || !uid) return;
 
     let alive = true;
+
     async function load() {
       setLoading(true);
       setError(null);
       try {
-        // const data = await apiGetMatches(user.id);
-
-        // временные мок-данные для верстки
-        const data: ApiMatchUser[] = [
-          {
-            id: "m1",
-            login: "dev_olga",
-            photoHash: "",
-            name: "Ольга",
-            surName: "Васильева",
-            fatherName: "Сергеевна",
-            age: 25,
-            gender: "female",
-            describeUser: "Frontend-разработчица, интересуюсь анимациями и UX.",
-            city: "Москва",
-            skills: ["React", "TypeScript", "Framer Motion"],
-            interests: ["UI", "Анимации"],
-            hobbies: ["Йога", "Рисование"],
-          },
-          {
-            id: "m2",
-            login: "pavel_backend",
-            photoHash: "",
-            name: "Павел",
-            surName: "Иванов",
-            fatherName: "Андреевич",
-            age: 28,
-            gender: "male",
-            describeUser: "Люблю чистую архитектуру и быстрые запросы.",
-            city: "Санкт-Петербург",
-            skills: ["Go", "PostgreSQL", "Docker"],
-            interests: ["Архитектура", "БД"],
-            hobbies: ["Футбол", "Настолки"],
-          },
-          {
-            id: "m3",
-            login: "ai_katya",
-            photoHash: "",
-            name: "Екатерина",
-            surName: "Соколова",
-            fatherName: "Игоревна",
-            age: 26,
-            gender: "female",
-            describeUser: "ML/LLM энтузиаст, делаю прототипы и демо.",
-            city: "Казань",
-            skills: ["Python", "PyTorch", "LangChain"],
-            interests: ["LLM", "Нейросети"],
-            hobbies: ["Путешествия", "Фотография"],
-          },
-        ];
-
+        const data = await apiGetMatches(uid!);
         if (!alive) return;
         setItems(data);
       } catch (e: unknown) {

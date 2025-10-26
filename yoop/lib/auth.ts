@@ -2,7 +2,7 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
 function ensureBase() {
-  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_BASE не задан в .env.local");
+  if (!API_BASE) throw new Error("Нет API");
 }
 
 export type LoginInput = { login: string; password: string };

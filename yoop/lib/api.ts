@@ -96,6 +96,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       headers,
       signal: controller.signal,
     });
+    console.log(res);
   } catch (err) {
     clearTimeout(timeout);
     if (API_DEBUG) console.error("[api:network-error]", url, err);
@@ -119,6 +120,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
         "[api:request:!ok]",
         res.status,
         url,
+        res,
         bodyText.slice(0, 2000)
       );
     }
@@ -489,15 +491,46 @@ export function mapRecommendationsToApiUsers(
 }
 
 // =============== ЛАЙК/МЭТЧИ/ИСТОРИИ ===============
+// lib/api.ts
 export async function apiLikeUser(
   fromUserId: string,
   toUserId: string
 ): Promise<void> {
-  await request<void>(`/user/${encodeURIComponent(fromUserId)}/like`, {
+  const url = `${BASE_URL}/api/user/${encodeURIComponent(fromUserId)}/like`;
+
+  // 1-я попытка: text/plain (без кавычек)
+  let res = await fetch(url, {
     method: "POST",
-    body: JSON.stringify({ id: toUserId }),
+    cache: "no-store",
+    headers: {
+      Accept: "*/*",
+      "Content-Type": "text/plain",
+    },
+    body: toUserId,
   });
+
+  // Если сервер всё же ждёт JSON-строку (с кавычками) — ретраим
+  if (!res.ok) {
+    const text1 = await res.text().catch(() => "");
+    console.warn("[apiLikeUser] text/plain failed:", res.status, text1);
+
+    res = await fetch(url, {
+      method: "POST",
+      cache: "no-store",
+      headers: {
+        Accept: "*/*",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(toUserId),
+    });
+  }
+
+  if (!res.ok) {
+    const text2 = await res.text().catch(() => "");
+    throw new Error(`[apiLikeUser] ${res.status} ${text2 || "Request failed"}`);
+  }
 }
+
 export async function apiDislikeUser(
   fromUserId: string,
   toUserId: string
@@ -508,7 +541,6 @@ export async function apiDislikeUser(
   });
 }
 
-// История лайков (эндпоинт, который возвращает массив «плоских» полей)
 export type LikedUser = {
   id: string;
   login: string;
@@ -524,9 +556,29 @@ export type LikedUser = {
   interests: string[];
   hobbies: string[];
 };
+export type HasLikeUser = {
+  id: string;
+  login: string;
+  photoHash: string | null;
+  name: string;
+  surName: string;
+  fatherName: string;
+  age: number;
+  gender: string;
+  describeUser: string | null;
+  city: string;
+  skills: string[];
+  interests: string[];
+  hobbies: string[];
+};
 
-export async function apiGetLiked(userId: string): Promise<LikedUser[]> {
+export async function apiGetLiked(userId: string): Promise<HasLikeUser[]> {
   return request<LikedUser[]>(`/user/${encodeURIComponent(userId)}/getLiked`, {
+    method: "GET",
+  });
+}
+export async function apiHasLiked(userId: string): Promise<LikedUser[]> {
+  return request<LikedUser[]>(`/user/${encodeURIComponent(userId)}/hasLiked`, {
     method: "GET",
   });
 }

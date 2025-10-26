@@ -21,7 +21,8 @@ export default function LikeButton({ targetId, className, onLiked }: Props) {
     if (!isAuthed || !user?.id) return;
     try {
       setLoading(true);
-      await apiLikeUser(user.id, targetId);
+      const res = await apiLikeUser(user.id, targetId);
+      console.log(res);
       onLiked?.(); // <- уведомляем родителя
     } catch (e) {
       console.error(e);
