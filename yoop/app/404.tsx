@@ -29,6 +29,7 @@ function NotFoundInner() {
   "use client";
   // импортим хук только внутри client-компонента
   const { useSearchParams } =
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require("next/navigation") as typeof import("next/navigation");
   const params = useSearchParams();
 

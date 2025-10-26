@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Input } from "@/components/ui/input";
@@ -8,40 +8,23 @@ import { Button } from "@/components/ui/button";
 import SearchCarousel from "@/components/SearchCarousel";
 import {
   apiCreateRequest,
-  apiGetUserRecommendations,
+  apiGetUserRecommendationsByPost,
   mapRecommendationsToApiUsers,
   type ApiUser,
 } from "@/lib/api";
-
-const COOLDOWN_MS = 1500;
-const POLL_INTERVAL_MS = 1200;
-const POLL_MAX_TRIES = 12; // ~14 сек ожидания
 
 export default function FindPage() {
   const router = useRouter();
   const { isAuthed, user } = useAuthStore();
 
   const [prompt, setPrompt] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // управляет скелетонами
   const [results, setResults] = useState<ApiUser[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const lastSentAtRef = useRef(0);
-  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const currentRequestIdRef = useRef<string | null>(null);
-  const isUnmountedRef = useRef(false);
-
-  // неавторизованных уводим на главную
   useEffect(() => {
     if (!isAuthed) router.replace("/");
   }, [isAuthed, router]);
-
-  useEffect(() => {
-    return () => {
-      isUnmountedRef.current = true;
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-    };
-  }, []);
 
   if (!isAuthed) return null;
 
@@ -49,82 +32,44 @@ export default function FindPage() {
     e?.preventDefault();
     const q = prompt.trim();
     if (!q) return;
-
     if (!user?.id) {
       setError("Вы не авторизованы");
       return;
     }
 
-    // кулдаун
-    const elapsed = Date.now() - lastSentAtRef.current;
-    if (elapsed < COOLDOWN_MS) {
-      setError(
-        `Слишком часто. Подождите ${Math.ceil((COOLDOWN_MS - elapsed) / 1000)} сек.`
-      );
-      return;
-    }
-
-    // сброс предыдущего поллинга
-    if (pollTimerRef.current) {
-      clearInterval(pollTimerRef.current);
-      pollTimerRef.current = null;
-    }
-    currentRequestIdRef.current = null;
-
-    setLoading(true);
     setError(null);
     setResults(null);
+    setLoading(true);
 
     try {
-      // 1) создаём запрос — получаем ID
+      // 1) создаём запрос → получаем requestId
       const requestId = await apiCreateRequest({
         userId: user.id,
-        name: "", // по ТЗ: пустая строка
+        name: q, // или "" — как тебе нужно
         text: q,
       });
-      currentRequestIdRef.current = requestId;
-      lastSentAtRef.current = Date.now();
 
-      // 2) поллим результаты
-      let tries = 0;
-
-      const poll = async () => {
-        tries += 1;
-        try {
-          const raw = await apiGetUserRecommendations(requestId);
-          // если пришли результаты — маппим в ApiUser[] и останавливаем поллинг
-          if (raw && raw.length > 0) {
-            if (isUnmountedRef.current) return;
-            const mapped = mapRecommendationsToApiUsers(raw);
-            setResults(mapped);
-            setLoading(false);
-            if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-            pollTimerRef.current = null;
-          } else if (tries >= POLL_MAX_TRIES) {
-            if (isUnmountedRef.current) return;
-            setError("Не удалось получить результаты. Попробуйте позже.");
-            setLoading(false);
-            if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-            pollTimerRef.current = null;
-          }
-        } catch (err) {
-          if (isUnmountedRef.current) return;
-          setError(
-            err instanceof Error ? err.message : "Ошибка получения результатов"
-          );
-          setLoading(false);
-          if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-          pollTimerRef.current = null;
-        }
-      };
-
-      // запускаем один раз сразу, затем — по интервалу
-      await poll();
-      if (!results && !pollTimerRef.current) {
-        pollTimerRef.current = setInterval(poll, POLL_INTERVAL_MS);
+      if (!requestId) {
+        throw new Error("Пустой requestId от /request/create");
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка поиска");
+
+      // 2) сразу запрашиваем рекомендации по POST
+      const raw = await apiGetUserRecommendationsByPost({
+        userId: user.id,
+        requestId,
+      });
+
+      const arr = Array.isArray(raw) ? raw : [];
+      if (arr.length === 0) {
+        setError("Ничего не найдено по этому запросу.");
+        setResults([]);
+      } else {
+        setResults(mapRecommendationsToApiUsers(arr));
+      }
+    } catch (err) {
+      console.error("[find] error:", err);
+      setError(err instanceof Error ? err.message : "Ошибка поиска");
+    } finally {
       setLoading(false);
     }
   };
