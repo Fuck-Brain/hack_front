@@ -12,16 +12,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function LikesPage() {
   const router = useRouter();
-  const { isAuthed, user } = useAuthStore();
+  const { isAuthed, user, hydrated } = useAuthStore();
 
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<LikedUser[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // редирект гость -> главная
   useEffect(() => {
+    if (!hydrated) return; // ждём пока Zustand прогрузится
     if (!isAuthed) router.replace("/");
-  }, [isAuthed, router]);
+  }, [hydrated, isAuthed, router]);
 
   useEffect(() => {
     let alive = true;
@@ -80,22 +80,6 @@ export default function LikesPage() {
             interests: ["ML", "Data Viz"],
             hobbies: ["Бег", "Фотография"],
           },
-          {
-            id: "3",
-            login: "ilya_ml",
-            photoHash: "",
-            name: "Илья",
-            surName: "Смирнов",
-            fatherName: "Петрович",
-            age: 29,
-            gender: "male",
-            describeUser:
-              "Data Scientist, экспериментирую с LLM и компьютерным зрением.",
-            city: "Новосибирск",
-            skills: ["Python", "TensorFlow", "PyTorch"],
-            interests: ["ML", "Data Viz"],
-            hobbies: ["Бег", "Фотография"],
-          },
         ];
 
         // в будущем можно заменить на:
@@ -119,7 +103,13 @@ export default function LikesPage() {
   }, [user?.id]);
 
   if (!isAuthed) return null;
-
+  if (!hydrated) {
+    return (
+      <div className="flex justify-center items-center h-80 text-neutral-400">
+        Загрузка профиля...
+      </div>
+    );
+  }
   return (
     <div className="space-y-6">
       <header>

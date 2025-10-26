@@ -33,7 +33,7 @@ export default function HomePage() {
       </section>
 
       <section id="random" className="space-y-4">
-        <h2 className="text-2xl font-semibold">Случайные профили</h2>
+        <h2 className="text-2xl font-semibold">Уже с нами</h2>
         <RandomCarousel />
       </section>
     </div>
